@@ -32,7 +32,7 @@ export default {
     extra: {
       dogApiKey: process.env.DOG_API_KEY,
       eas: {
-        projectId: '8a19e6ac-8001-47a3-b59e-e06dacc7e2d9',
+        projectId: 'e176bc7b-0876-4c4f-9377-74bc96c26a8b',
       },
     },
     plugins: ['expo-build-properties'],
