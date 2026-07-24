@@ -171,7 +171,7 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
             </View>
           )}
 
-          {/* Photo strip — horizontal ScrollView instead of FlatList */}
+          {/* Photo grid — 2 per row, vertical */}
           {images.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -180,12 +180,7 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
                   <Text style={styles.seeAll}>See All →</Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.photoStrip}
-                nestedScrollEnabled
-              >
+              <View style={styles.photoGrid}>
                 {images.map(item => (
                   <Image
                     key={item.id}
@@ -194,7 +189,7 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
                     resizeMode="cover"
                   />
                 ))}
-              </ScrollView>
+              </View>
             </View>
           )}
         </View>
@@ -284,9 +279,17 @@ const styles = StyleSheet.create({
   },
   traitText: { color: COLORS.secondary, fontSize: 13, fontWeight: '600' },
 
-  // Photo strip
-  photoStrip: { flexDirection: 'row', gap: 10, paddingRight: 4 },
-  thumbImage: { width: 120, height: 120, borderRadius: 16, flexShrink: 0 },
+  // Photo grid
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  thumbImage: {
+    width: (width - 56) / 2,
+    height: (width - 56) / 2,
+    borderRadius: 16,
+  },
 });
 
 export default BreedDetailScreen;
