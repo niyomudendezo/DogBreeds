@@ -1,4 +1,5 @@
-export const API_KEY = 'live_YOUR_API_KEY_HERE'; // Replace with your key from thedogapi.com
+import Constants from 'expo-constants';
+export const API_KEY: string = Constants.expoConfig?.extra?.dogApiKey ?? '';
 export const BASE_URL = 'https://api.thedogapi.com/v1';
 
 export const COLORS = {
