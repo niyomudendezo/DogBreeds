@@ -10,7 +10,6 @@ import {
   Dimensions,
   SafeAreaView,
   StatusBar,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fetchBreedImages } from '../api/dogApi';
@@ -19,7 +18,8 @@ import { COLORS } from '../constants';
 import { useFavorites } from '../hooks/useFavorites';
 
 const { width } = Dimensions.get('window');
-const HERO_HEIGHT = 340;
+const HERO_HEIGHT = 320;
+const PHOTO_SIZE = (width - 52) / 2;
 
 // ── Image Slideshow ──────────────────────────────────────────────────────────
 const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
@@ -50,10 +50,10 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
   }, [allUrls.length]);
 
   return (
-    <View style={styles.slideshowContainer}>
+    <View style={ss.hero}>
       <Animated.Image
         source={{ uri: allUrls[current] }}
-        style={[styles.heroImage, { opacity: fadeAnim }]}
+        style={[ss.heroImg, { opacity: fadeAnim }]}
         resizeMode="cover"
       />
       <LinearGradient
@@ -61,19 +61,19 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
         locations={[0.3, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <SafeAreaView style={styles.slideshowTopBar}>
-        <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
-          <Text style={styles.iconBtnText}>←</Text>
+      <SafeAreaView style={ss.topBar}>
+        <TouchableOpacity style={ss.iconBtn} onPress={onBack}>
+          <Text style={ss.iconBtnTxt}>←</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={onFavorite}>
-          <Text style={styles.iconBtnText}>{isFav ? '❤️' : '🤍'}</Text>
+        <TouchableOpacity style={ss.iconBtn} onPress={onFavorite}>
+          <Text style={ss.iconBtnTxt}>{isFav ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
       {allUrls.length > 1 && (
-        <View style={styles.slideDots}>
+        <View style={ss.dots}>
           {allUrls.slice(0, 8).map((_, i) => (
             <TouchableOpacity key={i} onPress={() => goTo(i)}>
-              <View style={[styles.slideDot, i === current && styles.slideDotActive]} />
+              <View style={[ss.dot, i === current && ss.dotActive]} />
             </TouchableOpacity>
           ))}
         </View>
@@ -82,12 +82,11 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
   );
 };
 
-// ── Stat Box ─────────────────────────────────────────────────────────────────
 const StatBox = ({ label, value, icon }: { label: string; value: string; icon: string }) => (
-  <View style={styles.statBox}>
-    <Text style={styles.statIcon}>{icon}</Text>
-    <Text style={styles.statValue}>{value || 'N/A'}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
+  <View style={ss.statBox}>
+    <Text style={ss.statIcon}>{icon}</Text>
+    <Text style={ss.statVal}>{value || 'N/A'}</Text>
+    <Text style={ss.statLbl}>{label}</Text>
   </View>
 );
 
@@ -97,22 +96,21 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
   const [images, setImages] = useState<DogImage[]>([]);
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(breed.id);
-  const mainUrl = breed.image?.url || `https://cdn2.thedogapi.com/images/${breed.reference_image_id}.jpg`;
+  const mainUrl = breed.image?.url ||
+    `https://cdn2.thedogapi.com/images/${breed.reference_image_id}.jpg`;
   const traits = breed.temperament?.split(', ').slice(0, 8) || [];
 
   useEffect(() => { fetchBreedImages(breed.id, 10).then(setImages); }, [breed.id]);
 
   return (
-    <View style={styles.safe}>
+    <View style={ss.root}>
       <StatusBar barStyle="light-content" />
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={ss.container}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-        overScrollMode="always"
-        bounces
+        scrollEventThrottle={16}
       >
+        {/* Hero slideshow */}
         <DetailSlideshow
           images={images}
           mainUrl={mainUrl}
@@ -121,94 +119,100 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
           isFav={favorite}
         />
 
-        <View style={styles.content}>
-          {/* Title */}
-          <View style={styles.titleRow}>
+        {/* Body */}
+        <View style={ss.body}>
+
+          {/* Title row */}
+          <View style={ss.titleRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.breedName}>{breed.name}</Text>
-              {breed.origin ? <Text style={styles.origin}>📍 {breed.origin}</Text> : null}
+              <Text style={ss.name}>{breed.name}</Text>
+              {breed.origin ? <Text style={ss.origin}>📍 {breed.origin}</Text> : null}
             </View>
             {breed.breed_group ? (
               <LinearGradient
                 colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-                style={styles.groupBadge}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                style={ss.groupBadge}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.groupBadgeText}>{breed.breed_group}</Text>
+                <Text style={ss.groupBadgeTxt}>{breed.breed_group}</Text>
               </LinearGradient>
             ) : null}
           </View>
 
           {/* Stats */}
-          <View style={styles.statsRow}>
-            <StatBox icon="⏳" label="Life Span" value={breed.life_span || ''} />
+          <View style={ss.statsRow}>
+            <StatBox icon="⏳" label="Life Span"   value={breed.life_span || ''} />
             <StatBox icon="⚖️" label="Weight (kg)" value={breed.weight?.metric || ''} />
             <StatBox icon="📏" label="Height (cm)" value={breed.height?.metric || ''} />
           </View>
 
-          {/* Bred For */}
+          {/* Bred for */}
           {breed.bred_for ? (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>🎯 Bred For</Text>
-              <Text style={styles.infoCardText}>{breed.bred_for}</Text>
+            <View style={ss.card}>
+              <Text style={ss.cardTitle}>🎯 Bred For</Text>
+              <Text style={ss.cardText}>{breed.bred_for}</Text>
             </View>
           ) : null}
 
           {/* Temperament */}
           {traits.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>✨ Temperament</Text>
-              <View style={styles.traitsWrap}>
+            <View style={ss.section}>
+              <Text style={ss.sectionTitle}>✨ Temperament</Text>
+              <View style={ss.chips}>
                 {traits.map((t: string, i: number) => (
                   <LinearGradient
                     key={t}
-                    colors={i % 2 === 0 ? ['#1E1E32', '#1E1E32'] : ['rgba(255,107,53,0.15)', 'rgba(233,69,96,0.15)']}
-                    style={styles.traitChip}
+                    colors={i % 2 === 0
+                      ? ['#1E1E32', '#1E1E32']
+                      : ['rgba(255,107,53,0.15)', 'rgba(233,69,96,0.15)']}
+                    style={ss.chip}
                   >
-                    <Text style={styles.traitText}>{t.trim()}</Text>
+                    <Text style={ss.chipTxt}>{t.trim()}</Text>
                   </LinearGradient>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Photo grid — 2 per row, vertical */}
+          {/* Photos — 2 per row vertical grid */}
           {images.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>📸 Photos</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('ImageGallery', { breedId: breed.id, breedName: breed.name })}>
-                  <Text style={styles.seeAll}>See All →</Text>
+            <View style={ss.section}>
+              <View style={ss.sectionRow}>
+                <Text style={ss.sectionTitle}>📸 Photos</Text>
+                <TouchableOpacity onPress={() =>
+                  navigation.navigate('ImageGallery', { breedId: breed.id, breedName: breed.name })
+                }>
+                  <Text style={ss.seeAll}>See All →</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.photoGrid}>
+              <View style={ss.photoGrid}>
                 {images.map(item => (
                   <Image
                     key={item.id}
                     source={{ uri: item.url }}
-                    style={styles.thumbImage}
+                    style={ss.photo}
                     resizeMode="cover"
                   />
                 ))}
               </View>
             </View>
           )}
+
         </View>
       </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 100, flexGrow: 1 },
+const ss = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.background },
+  // no flex on ScrollView — let content drive height
+  container: { paddingBottom: 60 },
 
-  // Slideshow
-  slideshowContainer: { width, height: HERO_HEIGHT, overflow: 'hidden' },
-  heroImage: { width: '100%', height: '100%', position: 'absolute' },
-  slideshowTopBar: {
+  // Hero
+  hero: { width, height: HERO_HEIGHT, overflow: 'hidden' },
+  heroImg: { position: 'absolute', width: '100%', height: '100%' },
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -217,81 +221,67 @@ const styles = StyleSheet.create({
   iconBtn: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 20,
-    width: 42,
-    height: 42,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    width: 42, height: 42,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  iconBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  slideDots: { position: 'absolute', bottom: 16, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  slideDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
-  slideDotActive: { width: 20, backgroundColor: COLORS.primary },
+  iconBtnTxt: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  dots: {
+    position: 'absolute', bottom: 16,
+    left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
+  dotActive: { width: 20, backgroundColor: COLORS.primary },
 
-  // Content
-  content: { padding: 20, paddingTop: 10 },
+  // Body
+  body: { paddingHorizontal: 20, paddingTop: 16 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 20 },
-  breedName: { color: COLORS.text, fontSize: 32, fontWeight: '900', lineHeight: 36 },
+  name: { color: COLORS.text, fontSize: 30, fontWeight: '900', lineHeight: 34 },
   origin: { color: COLORS.textMuted, fontSize: 13, marginTop: 4 },
   groupBadge: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 6, marginTop: 6 },
-  groupBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  groupBadgeTxt: { color: '#fff', fontWeight: '800', fontSize: 12 },
 
   // Stats
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   statBox: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: 18,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    flex: 1, backgroundColor: COLORS.card,
+    borderRadius: 18, padding: 14, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
   },
   statIcon: { fontSize: 20, marginBottom: 6 },
-  statValue: { color: COLORS.primary, fontWeight: '800', fontSize: 13, textAlign: 'center' },
-  statLabel: { color: COLORS.textMuted, fontSize: 10, marginTop: 3, textAlign: 'center' },
+  statVal: { color: COLORS.primary, fontWeight: '800', fontSize: 13, textAlign: 'center' },
+  statLbl: { color: COLORS.textMuted, fontSize: 10, marginTop: 3, textAlign: 'center' },
 
-  // Info card
-  infoCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  // Card
+  card: {
+    backgroundColor: COLORS.card, borderRadius: 18,
+    padding: 16, marginBottom: 20,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  infoCardTitle: { color: COLORS.text, fontWeight: '800', fontSize: 15, marginBottom: 8 },
-  infoCardText: { color: COLORS.textMuted, fontSize: 14, lineHeight: 22 },
+  cardTitle: { color: COLORS.text, fontWeight: '800', fontSize: 15, marginBottom: 8 },
+  cardText: { color: COLORS.textMuted, fontSize: 14, lineHeight: 22 },
 
   // Sections
   section: { marginBottom: 24 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  sectionRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 14,
+  },
   sectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800', marginBottom: 12 },
   seeAll: { color: COLORS.primary, fontWeight: '700', fontSize: 13 },
 
-  // Traits
-  traitsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  traitChip: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  // Chips
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  traitText: { color: COLORS.secondary, fontSize: 13, fontWeight: '600' },
+  chipTxt: { color: COLORS.secondary, fontSize: 13, fontWeight: '600' },
 
-  // Photo grid
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  thumbImage: {
-    width: (width - 56) / 2,
-    height: (width - 56) / 2,
-    borderRadius: 16,
-  },
+  // Photo grid — 2 columns
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  photo: { width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 16 },
 });
 
 export default BreedDetailScreen;
