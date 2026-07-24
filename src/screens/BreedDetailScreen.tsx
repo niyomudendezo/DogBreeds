@@ -108,7 +108,13 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
         </TouchableOpacity>
       </SafeAreaView>
 
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+      >
         <DetailSlideshow images={images} mainUrl={mainUrl} />
 
         <View style={styles.content}>
@@ -192,6 +198,8 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
   topButtons: {
     position: 'absolute',
     top: 0,

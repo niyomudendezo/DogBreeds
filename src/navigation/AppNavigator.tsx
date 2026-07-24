@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavigationContainer, useNavigationState } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -37,50 +37,52 @@ const tabStyles = StyleSheet.create({
   },
 });
 
-const TabNavigator = () => (
-  <Tab.Navigator
-    screenOptions={{
-      headerShown: false,
-      tabBarStyle: {
-        backgroundColor: COLORS.card,
-        borderTopColor: COLORS.border,
-        borderTopWidth: 1,
-        height: 72,
-        paddingBottom: 10,
-        paddingTop: 6,
-      },
-      tabBarShowLabel: false,
-    }}
-  >
-    <Tab.Screen
-      name="Home"
-      component={HomeScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Breeds" focused={focused} /> }}
-    />
-    <Tab.Screen
-      name="Gallery"
-      component={GalleryScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📸" label="Gallery" focused={focused} /> }}
-    />
-    <Tab.Screen
-      name="Favorites"
-      component={FavoritesScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="❤️" label="Favorites" focused={focused} /> }}
-    />
-  </Tab.Navigator>
-);
-
 // Wrapper that gives SideDrawer access to navigation
 const RootWithDrawer = ({ navigation }: any) => {
-  const routeName = useNavigationState(state => {
-    const tabState = state?.routes?.[0]?.state;
+  const state = useNavigationState(s => s);
+  const activeRoute = state?.routes?.[state.index]?.name ?? 'MainTabs';
+  const hideTabBar = ['BreedDetail', 'ImageGallery', 'Search'].includes(activeRoute);
+
+  const routeName = useNavigationState(s => {
+    const tabState = s?.routes?.[0]?.state;
     const idx = tabState?.index ?? 0;
     return (tabState?.routes?.[idx]?.name as string) ?? 'Home';
   });
 
   return (
     <SideDrawer navigation={navigation} activeScreen={routeName}>
-      <TabNavigator />
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: hideTabBar
+            ? { display: 'none' }
+            : {
+                backgroundColor: COLORS.card,
+                borderTopColor: COLORS.border,
+                borderTopWidth: 1,
+                height: 72,
+                paddingBottom: 10,
+                paddingTop: 6,
+              },
+          tabBarShowLabel: false,
+        }}
+      >
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Breeds" focused={focused} /> }}
+        />
+        <Tab.Screen
+          name="Gallery"
+          component={GalleryScreen}
+          options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📸" label="Gallery" focused={focused} /> }}
+        />
+        <Tab.Screen
+          name="Favorites"
+          component={FavoritesScreen}
+          options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="❤️" label="Favorites" focused={focused} /> }}
+        />
+      </Tab.Navigator>
     </SideDrawer>
   );
 };
