@@ -22,7 +22,13 @@ const { width } = Dimensions.get('window');
 const HERO_HEIGHT = 340;
 
 // ── Image Slideshow for detail page ─────────────────────────────────────────
-const DetailSlideshow = ({ images, mainUrl }: { images: DogImage[]; mainUrl: string }) => {
+const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
+  images: DogImage[];
+  mainUrl: string;
+  onBack: () => void;
+  onFavorite: () => void;
+  isFav: boolean;
+}) => {
   const [current, setCurrent] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -60,6 +66,15 @@ const DetailSlideshow = ({ images, mainUrl }: { images: DogImage[]; mainUrl: str
         locations={[0.3, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
+      {/* Back + Fav buttons rendered inside slideshow so they are always on top */}
+      <SafeAreaView style={styles.slideshowTopBar}>
+        <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
+          <Text style={styles.iconBtnText}>←</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconBtn} onPress={onFavorite}>
+          <Text style={styles.iconBtnText}>{isFav ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
       {/* Dot indicators */}
       {allUrls.length > 1 && (
         <View style={styles.slideDots}>
@@ -98,16 +113,6 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" />
 
-      {/* Fixed back + fav buttons */}
-      <SafeAreaView style={styles.topButtons}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.iconBtnText}>←</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => toggleFavorite(breed)}>
-          <Text style={styles.iconBtnText}>{favorite ? '❤️' : '🤍'}</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -115,7 +120,13 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
         bounces={true}
         scrollEventThrottle={16}
       >
-        <DetailSlideshow images={images} mainUrl={mainUrl} />
+        <DetailSlideshow
+          images={images}
+          mainUrl={mainUrl}
+          onBack={() => navigation.goBack()}
+          onFavorite={() => toggleFavorite(breed)}
+          isFav={favorite}
+        />
 
         <View style={styles.content}>
           {/* Title */}
@@ -200,12 +211,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
-  topButtons: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 20,
+  slideshowContainer: { width, height: HERO_HEIGHT, overflow: 'hidden' },
+  heroImage: { width: '100%', height: '100%', position: 'absolute' },
+  slideshowTopBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -222,10 +230,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
   },
   iconBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-
-  // Slideshow
-  slideshowContainer: { width, height: HERO_HEIGHT, overflow: 'hidden' },
-  heroImage: { width: '100%', height: '100%', position: 'absolute' },
   slideDots: { position: 'absolute', bottom: 16, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   slideDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
   slideDotActive: { width: 20, backgroundColor: COLORS.primary },
