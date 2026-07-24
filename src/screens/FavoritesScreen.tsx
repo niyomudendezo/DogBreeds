@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../constants';
 import { useFavorites } from '../hooks/useFavorites';
 import BreedCard from '../components/BreedCard';
+import HamburgerBtn from '../components/HamburgerBtn';
 
 const FavoritesScreen = ({ navigation }: any) => {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
@@ -22,7 +23,8 @@ const FavoritesScreen = ({ navigation }: any) => {
       <SafeAreaView>
         <LinearGradient colors={[COLORS.background, 'transparent']} style={styles.header}>
           <View style={styles.headerRow}>
-            <View>
+            <HamburgerBtn />
+            <View style={{ flex: 1 }}>
               <Text style={styles.title}>❤️ Favorites</Text>
               <Text style={styles.subtitle}>{favorites.length} saved breeds</Text>
             </View>

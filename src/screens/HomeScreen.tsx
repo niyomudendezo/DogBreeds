@@ -19,6 +19,7 @@ import { COLORS } from '../constants';
 import BreedCard from '../components/BreedCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useFavorites } from '../hooks/useFavorites';
+import HamburgerBtn from '../components/HamburgerBtn';
 
 const { width, height } = Dimensions.get('window');
 const SLIDE_HEIGHT = height * 0.48;
@@ -80,9 +81,12 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
       <SafeAreaView style={styles.slideTopBar}>
         <View style={styles.logoRow}>
           <Text style={styles.logoText}>🐾 DogBreeds</Text>
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
+          <View style={styles.logoRight}>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+            <HamburgerBtn />
           </View>
         </View>
       </SafeAreaView>
@@ -254,6 +258,7 @@ const styles = StyleSheet.create({
   slideTopBar: { position: 'absolute', top: 0, left: 0, right: 0 },
   logoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 14 },
   logoText: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.5 },
+  logoRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,107,53,0.25)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.primary, gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
   liveText: { color: COLORS.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1 },

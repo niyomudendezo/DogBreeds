@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { fetchRandomImages, fetchBreedImages, searchBreeds } from '../api/dogApi';
 import { DogImage, Breed } from '../types';
 import { COLORS } from '../constants';
+import HamburgerBtn from '../components/HamburgerBtn';
 
 const { width, height } = Dimensions.get('window');
 const COL = 3;
@@ -125,6 +126,9 @@ const GalleryScreen = ({ route, navigation }: any) => {
                 <Text style={styles.iconBtnText}>←</Text>
               </TouchableOpacity>
             )}
+
+            {/* Hamburger — only on main gallery tab (no back) */}
+            {!navigation.canGoBack() && <HamburgerBtn />}
 
             {/* Title — hides when search is open */}
             {!searchOpen && (

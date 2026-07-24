@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { NavigationContainer, useNavigationState } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, StyleSheet } from 'react-native';
@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import BreedDetailScreen from '../screens/BreedDetailScreen';
 import GalleryScreen from '../screens/GalleryScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import SideDrawer from '../components/SideDrawer';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -68,10 +69,25 @@ const TabNavigator = () => (
   </Tab.Navigator>
 );
 
+// Wrapper that gives SideDrawer access to navigation
+const RootWithDrawer = ({ navigation }: any) => {
+  const routeName = useNavigationState(state => {
+    const tabState = state?.routes?.[0]?.state;
+    const idx = tabState?.index ?? 0;
+    return (tabState?.routes?.[idx]?.name as string) ?? 'Home';
+  });
+
+  return (
+    <SideDrawer navigation={navigation} activeScreen={routeName}>
+      <TabNavigator />
+    </SideDrawer>
+  );
+};
+
 const AppNavigator = () => (
   <NavigationContainer>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="MainTabs" component={RootWithDrawer} />
       <Stack.Screen name="BreedDetail" component={BreedDetailScreen} />
       <Stack.Screen name="ImageGallery" component={GalleryScreen} />
     </Stack.Navigator>
