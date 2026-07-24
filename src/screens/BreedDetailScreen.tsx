@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  FlatList,
   SafeAreaView,
   StatusBar,
 } from 'react-native';
@@ -21,7 +20,7 @@ import { useFavorites } from '../hooks/useFavorites';
 const { width } = Dimensions.get('window');
 const HERO_HEIGHT = 340;
 
-// ── Image Slideshow for detail page ─────────────────────────────────────────
+// ── Image Slideshow ──────────────────────────────────────────────────────────
 const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
   images: DogImage[];
   mainUrl: string;
@@ -32,7 +31,6 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
   const [current, setCurrent] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const allUrls = images.length > 0 ? images.map(i => i.url) : [mainUrl];
 
   const goTo = (next: number) => {
@@ -45,11 +43,7 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
   useEffect(() => {
     if (allUrls.length < 2) return;
     timerRef.current = setInterval(() => {
-      setCurrent(prev => {
-        const next = (prev + 1) % allUrls.length;
-        goTo(next);
-        return prev;
-      });
+      setCurrent(prev => { const next = (prev + 1) % allUrls.length; goTo(next); return prev; });
     }, 3000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [allUrls.length]);
@@ -66,7 +60,6 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
         locations={[0.3, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
-      {/* Back + Fav buttons rendered inside slideshow so they are always on top */}
       <SafeAreaView style={styles.slideshowTopBar}>
         <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
           <Text style={styles.iconBtnText}>←</Text>
@@ -75,7 +68,6 @@ const DetailSlideshow = ({ images, mainUrl, onBack, onFavorite, isFav }: {
           <Text style={styles.iconBtnText}>{isFav ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
-      {/* Dot indicators */}
       {allUrls.length > 1 && (
         <View style={styles.slideDots}>
           {allUrls.slice(0, 8).map((_, i) => (
@@ -112,13 +104,12 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" />
-
+      {/* Outer vertical scroll */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        bounces={true}
-        scrollEventThrottle={16}
+        nestedScrollEnabled
       >
         <DetailSlideshow
           images={images}
@@ -180,7 +171,7 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
             </View>
           )}
 
-          {/* Photo strip */}
+          {/* Photo strip — horizontal ScrollView instead of FlatList */}
           {images.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -189,16 +180,21 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
                   <Text style={styles.seeAll}>See All →</Text>
                 </TouchableOpacity>
               </View>
-              <FlatList
+              <ScrollView
                 horizontal
-                data={images}
-                keyExtractor={item => item.id}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 10 }}
-                renderItem={({ item }) => (
-                  <Image source={{ uri: item.url }} style={styles.thumbImage} resizeMode="cover" />
-                )}
-              />
+                contentContainerStyle={styles.photoStrip}
+                nestedScrollEnabled
+              >
+                {images.map(item => (
+                  <Image
+                    key={item.id}
+                    source={{ uri: item.url }}
+                    style={styles.thumbImage}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
             </View>
           )}
         </View>
@@ -210,7 +206,9 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
+  scrollContent: { paddingBottom: 50 },
+
+  // Slideshow
   slideshowContainer: { width, height: HERO_HEIGHT, overflow: 'hidden' },
   heroImage: { width: '100%', height: '100%', position: 'absolute' },
   slideshowTopBar: {
@@ -286,8 +284,9 @@ const styles = StyleSheet.create({
   },
   traitText: { color: COLORS.secondary, fontSize: 13, fontWeight: '600' },
 
-  // Thumbnails
-  thumbImage: { width: 120, height: 120, borderRadius: 16 },
+  // Photo strip
+  photoStrip: { flexDirection: 'row', gap: 10, paddingRight: 4 },
+  thumbImage: { width: 120, height: 120, borderRadius: 16, flexShrink: 0 },
 });
 
 export default BreedDetailScreen;
