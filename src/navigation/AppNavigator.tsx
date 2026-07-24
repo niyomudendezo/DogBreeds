@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { COLORS } from '../constants';
 import HomeScreen from '../screens/HomeScreen';
 import BreedDetailScreen from '../screens/BreedDetailScreen';
@@ -14,12 +14,26 @@ const Tab = createBottomTabNavigator();
 
 const TabIcon = ({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) => (
   <View style={{ alignItems: 'center', gap: 2 }}>
-    <Text style={{ fontSize: 20 }}>{emoji}</Text>
-    <Text style={{ fontSize: 10, color: focused ? COLORS.primary : COLORS.textMuted, fontWeight: focused ? '700' : '400' }}>
+    <View style={focused ? tabStyles.activeIconWrap : tabStyles.iconWrap}>
+      <Text style={{ fontSize: 18 }}>{emoji}</Text>
+    </View>
+    <Text style={{ fontSize: 10, color: focused ? COLORS.primary : COLORS.textMuted, fontWeight: focused ? '800' : '500' }}>
       {label}
     </Text>
   </View>
 );
+
+const tabStyles = StyleSheet.create({
+  iconWrap: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  activeIconWrap: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,107,53,0.18)',
+    borderRadius: 12,
+  },
+});
 
 const TabNavigator = () => (
   <Tab.Navigator
@@ -29,8 +43,9 @@ const TabNavigator = () => (
         backgroundColor: COLORS.card,
         borderTopColor: COLORS.border,
         borderTopWidth: 1,
-        height: 70,
+        height: 72,
         paddingBottom: 10,
+        paddingTop: 6,
       },
       tabBarShowLabel: false,
     }}
