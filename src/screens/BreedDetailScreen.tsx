@@ -10,6 +10,7 @@ import {
   Dimensions,
   SafeAreaView,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fetchBreedImages } from '../api/dogApi';
@@ -104,12 +105,13 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" />
-      {/* Outer vertical scroll */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        overScrollMode="always"
+        bounces
       >
         <DetailSlideshow
           images={images}
@@ -201,7 +203,7 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 50 },
+  scrollContent: { paddingBottom: 100, flexGrow: 1 },
 
   // Slideshow
   slideshowContainer: { width, height: HERO_HEIGHT, overflow: 'hidden' },
