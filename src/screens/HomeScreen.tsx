@@ -13,11 +13,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { fetchBreeds, fetchRandomImages, searchBreeds } from '../api/dogApi';
+import { fetchBreeds, fetchRandomImages } from '../api/dogApi';
 import { Breed, DogImage } from '../types';
 import { COLORS } from '../constants';
 import BreedCard from '../components/BreedCard';
-import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useFavorites } from '../hooks/useFavorites';
 
@@ -33,34 +32,25 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    fetchRandomImages(8).then(setSlides);
-  }, []);
+  useEffect(() => { fetchRandomImages(8).then(setSlides); }, []);
 
-  const goTo = useCallback(
-    (next: number) => {
+  const goTo = useCallback((next: number) => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1.06, duration: 400, useNativeDriver: true }),
+    ]).start(() => {
+      setCurrent(next);
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 1.06, duration: 400, useNativeDriver: true }),
-      ]).start(() => {
-        setCurrent(next);
-        Animated.parallel([
-          Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-          Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        ]).start();
-      });
-    },
-    [fadeAnim, scaleAnim]
-  );
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [fadeAnim, scaleAnim]);
 
   useEffect(() => {
     if (slides.length < 2) return;
     timerRef.current = setInterval(() => {
-      setCurrent(prev => {
-        const next = (prev + 1) % slides.length;
-        goTo(next);
-        return prev; // goTo handles the state
-      });
+      setCurrent(prev => { const next = (prev + 1) % slides.length; goTo(next); return prev; });
     }, 3500);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [slides, goTo]);
@@ -87,8 +77,6 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
         locations={[0, 0.55, 1]}
         style={StyleSheet.absoluteFill}
       />
-
-      {/* Top bar */}
       <SafeAreaView style={styles.slideTopBar}>
         <View style={styles.logoRow}>
           <Text style={styles.logoText}>🐾 DogBreeds</Text>
@@ -98,8 +86,6 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
           </View>
         </View>
       </SafeAreaView>
-
-      {/* Bottom hero content */}
       <View style={styles.slideBottom}>
         {slide.breeds && slide.breeds.length > 0 && (
           <View style={styles.slideBreedBadge}>
@@ -107,19 +93,16 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
           </View>
         )}
         <Text style={styles.heroTitle}>Discover{'\n'}Amazing Dogs</Text>
-        <Text style={styles.heroSub}>Explore {'>'}200 breeds with photos, traits & more</Text>
+        <Text style={styles.heroSub}>Explore 200+ breeds with photos, traits & more</Text>
         <TouchableOpacity style={styles.exploreBtn} onPress={onExplore} activeOpacity={0.85}>
           <LinearGradient
             colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             style={styles.exploreBtnGradient}
           >
             <Text style={styles.exploreBtnText}>Explore Breeds →</Text>
           </LinearGradient>
         </TouchableOpacity>
-
-        {/* Dot indicators */}
         <View style={styles.dots}>
           {slides.map((_, i) => (
             <TouchableOpacity key={i} onPress={() => goTo(i)}>
@@ -145,7 +128,7 @@ const FeaturedRow = ({ breeds, navigation }: { breeds: Breed[]; navigation: any 
         </TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
-        {breeds.slice(0, 8).map((breed, i) => {
+        {breeds.slice(0, 8).map(breed => {
           const uri = breed.image?.url || `https://cdn2.thedogapi.com/images/${breed.reference_image_id}.jpg`;
           return (
             <TouchableOpacity
@@ -156,17 +139,12 @@ const FeaturedRow = ({ breeds, navigation }: { breeds: Breed[]; navigation: any 
             >
               <Image source={{ uri }} style={styles.featuredImage} resizeMode="cover" />
               <LinearGradient colors={['transparent', 'rgba(0,0,0,0.88)']} style={styles.featuredGradient} />
-              <TouchableOpacity
-                style={styles.featuredHeart}
-                onPress={() => toggleFavorite(breed)}
-              >
+              <TouchableOpacity style={styles.featuredHeart} onPress={() => toggleFavorite(breed)}>
                 <Text style={{ fontSize: 14 }}>{isFavorite(breed.id) ? '❤️' : '🤍'}</Text>
               </TouchableOpacity>
               <View style={styles.featuredInfo}>
                 <Text style={styles.featuredName} numberOfLines={1}>{breed.name}</Text>
-                {breed.breed_group ? (
-                  <Text style={styles.featuredGroup} numberOfLines={1}>{breed.breed_group}</Text>
-                ) : null}
+                {breed.breed_group ? <Text style={styles.featuredGroup}>{breed.breed_group}</Text> : null}
               </View>
             </TouchableOpacity>
           );
@@ -180,24 +158,18 @@ const FeaturedRow = ({ breeds, navigation }: { breeds: Breed[]; navigation: any 
 const HomeScreen = ({ navigation }: any) => {
   const [breeds, setBreeds] = useState<Breed[]>([]);
   const [filtered, setFiltered] = useState<Breed[]>([]);
-  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [loadingMore, setLoadingMore] = useState(false);
-  const [showGrid, setShowGrid] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const listRef = useRef<any>(null);
 
   useEffect(() => { loadBreeds(); }, []);
 
   useEffect(() => {
-    if (query.trim().length > 1) {
-      searchBreeds(query).then(r => { setFiltered(r); setShowGrid(true); });
-    } else {
-      applyGroupFilter(breeds, selectedGroup);
-    }
-  }, [query, selectedGroup, breeds]);
+    applyGroupFilter(breeds, selectedGroup);
+  }, [selectedGroup, breeds]);
 
   const loadBreeds = async (nextPage = 0) => {
     try {
@@ -211,17 +183,15 @@ const HomeScreen = ({ navigation }: any) => {
     group === 'All' ? setFiltered(list) : setFiltered(list.filter(b => b.breed_group === group));
 
   const loadMore = () => {
-    if (loadingMore || query.trim()) return;
+    if (loadingMore) return;
     setLoadingMore(true);
     const next = page + 1;
     setPage(next);
     loadBreeds(next);
   };
 
-  const scrollToGrid = () => {
-    setShowGrid(true);
+  const scrollToGrid = () =>
     setTimeout(() => listRef.current?.scrollToOffset({ offset: SLIDE_HEIGHT, animated: true }), 100);
-  };
 
   if (loading) return <LoadingSpinner />;
 
@@ -229,17 +199,14 @@ const HomeScreen = ({ navigation }: any) => {
     <View>
       <HeroSlideshow onExplore={scrollToGrid} />
       <FeaturedRow breeds={breeds} navigation={navigation} />
-
-      {/* Search + Filter */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🐕 All Breeds</Text>
-        <SearchBar value={query} onChangeText={setQuery} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupList}>
           {GROUPS.map(g => (
             <TouchableOpacity
               key={g}
               style={[styles.groupChip, selectedGroup === g && styles.groupChipActive]}
-              onPress={() => { setSelectedGroup(g); setShowGrid(true); }}
+              onPress={() => setSelectedGroup(g)}
             >
               <Text style={[styles.groupText, selectedGroup === g && styles.groupTextActive]}>{g}</Text>
             </TouchableOpacity>
@@ -273,9 +240,7 @@ const HomeScreen = ({ navigation }: any) => {
           />
         )}
         ListFooterComponent={loadingMore ? (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <LoadingSpinner />
-          </View>
+          <View style={{ padding: 20, alignItems: 'center' }}><LoadingSpinner /></View>
         ) : null}
       />
     </View>
@@ -284,43 +249,16 @@ const HomeScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-
-  // Slideshow
   slideContainer: { width, height: SLIDE_HEIGHT, overflow: 'hidden' },
   slideImage: { width: '100%', height: '100%', position: 'absolute' },
   slideTopBar: { position: 'absolute', top: 0, left: 0, right: 0 },
-  logoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 14,
-  },
+  logoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 14 },
   logoText: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.5 },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,107,53,0.25)',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    gap: 5,
-  },
+  liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,107,53,0.25)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.primary, gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
   liveText: { color: COLORS.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
   slideBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, paddingBottom: 28 },
-  slideBreedBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,107,53,0.3)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,53,0.6)',
-    marginBottom: 10,
-  },
+  slideBreedBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,107,53,0.3)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(255,107,53,0.6)', marginBottom: 10 },
   slideBreedText: { color: COLORS.secondary, fontSize: 12, fontWeight: '700' },
   heroTitle: { color: '#fff', fontSize: 36, fontWeight: '900', lineHeight: 42, marginBottom: 8 },
   heroSub: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 20 },
@@ -330,8 +268,6 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
   dotActive: { width: 22, backgroundColor: COLORS.primary },
-
-  // Featured
   section: { paddingHorizontal: 16, marginBottom: 8, marginTop: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: { color: COLORS.text, fontSize: 20, fontWeight: '800' },
@@ -340,28 +276,12 @@ const styles = StyleSheet.create({
   featuredCard: { width: 150, height: 200, borderRadius: 20, overflow: 'hidden', backgroundColor: COLORS.card },
   featuredImage: { width: '100%', height: '100%', position: 'absolute' },
   featuredGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 90 },
-  featuredHeart: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 16,
-    padding: 5,
-  },
+  featuredHeart: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 16, padding: 5 },
   featuredInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12 },
   featuredName: { color: '#fff', fontWeight: '800', fontSize: 13 },
   featuredGroup: { color: COLORS.secondary, fontSize: 11, marginTop: 2 },
-
-  // Grid
   groupList: { paddingBottom: 12, gap: 8 },
-  groupChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 24,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
+  groupChip: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 24, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.border },
   groupChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   groupText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
   groupTextActive: { color: '#fff' },

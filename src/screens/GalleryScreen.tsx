@@ -12,10 +12,11 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { fetchRandomImages, fetchBreedImages } from '../api/dogApi';
-import { DogImage } from '../types';
+import { fetchRandomImages, fetchBreedImages, searchBreeds } from '../api/dogApi';
+import { DogImage, Breed } from '../types';
 import { COLORS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -25,15 +26,53 @@ const IMG_SIZE = (width - (COL + 1) * 2) / COL;
 const GalleryScreen = ({ route, navigation }: any) => {
   const breedId = route?.params?.breedId;
   const breedName = route?.params?.breedName;
+
   const [images, setImages] = useState<DogImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<DogImage | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [page, setPage] = useState(0);
+
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Breed[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchAnim = useRef(new Animated.Value(0)).current;
+  const inputRef = useRef<TextInput>(null);
+
+  // Modal animation
   const modalScale = useRef(new Animated.Value(0.85)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => { loadImages(0); }, [breedId]);
+
+  useEffect(() => {
+    if (query.trim().length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    const t = setTimeout(() => {
+      searchBreeds(query).then(r => { setSearchResults(r); setSearching(false); });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const toggleSearch = () => {
+    if (searchOpen) {
+      Animated.timing(searchAnim, { toValue: 0, duration: 220, useNativeDriver: false }).start(() => {
+        setSearchOpen(false);
+        setQuery('');
+        setSearchResults([]);
+      });
+    } else {
+      setSearchOpen(true);
+      Animated.timing(searchAnim, { toValue: 1, duration: 250, useNativeDriver: false }).start(() => {
+        inputRef.current?.focus();
+      });
+    }
+  };
+
+  const searchBarWidth = searchAnim.interpolate({ inputRange: [0, 1], outputRange: [0, width - 110] });
+  const searchBarOpacity = searchAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
 
   const loadImages = async (p: number) => {
     try {
@@ -76,23 +115,90 @@ const GalleryScreen = ({ route, navigation }: any) => {
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
+      {/* ── Header with inline search ── */}
       <SafeAreaView>
         <LinearGradient colors={[COLORS.background, 'transparent']} style={styles.header}>
           <View style={styles.headerRow}>
+            {/* Back button */}
             {navigation.canGoBack() && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Text style={styles.backText}>←</Text>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                <Text style={styles.iconBtnText}>←</Text>
               </TouchableOpacity>
             )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{breedName ? `${breedName}` : '🐶 Dog Gallery'}</Text>
-              <Text style={styles.subtitle}>{images.length} photos</Text>
-            </View>
+
+            {/* Title — hides when search is open */}
+            {!searchOpen && (
+              <View style={styles.titleWrap}>
+                <Text style={styles.title} numberOfLines={1}>
+                  {breedName ? breedName : '🐶 Gallery'}
+                </Text>
+                <Text style={styles.subtitle}>{images.length} photos</Text>
+              </View>
+            )}
+
+            {/* Expanding search input */}
+            <Animated.View style={[styles.searchInputWrap, { width: searchBarWidth, opacity: searchBarOpacity }]}>
+              <TextInput
+                ref={inputRef}
+                style={styles.searchInput}
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search breeds..."
+                placeholderTextColor={COLORS.textMuted}
+                returnKeyType="search"
+              />
+              {query.length > 0 && (
+                <TouchableOpacity onPress={() => setQuery('')} style={styles.clearBtn}>
+                  <Text style={styles.clearText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </Animated.View>
+
+            {/* Search icon button */}
+            <TouchableOpacity
+              onPress={toggleSearch}
+              style={[styles.iconBtn, searchOpen && styles.iconBtnActive]}
+            >
+              <Text style={styles.iconBtnText}>{searchOpen ? '✕' : '🔍'}</Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Search results dropdown */}
+          {searchOpen && searchResults.length > 0 && (
+            <View style={styles.dropdown}>
+              {searching && (
+                <ActivityIndicator size="small" color={COLORS.primary} style={{ marginBottom: 8 }} />
+              )}
+              {searchResults.slice(0, 6).map(breed => (
+                <TouchableOpacity
+                  key={breed.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    toggleSearch();
+                    navigation.navigate('ImageGallery', { breedId: breed.id, breedName: breed.name });
+                  }}
+                >
+                  {breed.image?.url || breed.reference_image_id ? (
+                    <Image
+                      source={{ uri: breed.image?.url || `https://cdn2.thedogapi.com/images/${breed.reference_image_id}.jpg` }}
+                      style={styles.dropdownThumb}
+                    />
+                  ) : null}
+                  <View style={styles.dropdownInfo}>
+                    <Text style={styles.dropdownName}>{breed.name}</Text>
+                    {breed.breed_group ? (
+                      <Text style={styles.dropdownGroup}>{breed.breed_group}</Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.dropdownArrow}>→</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </LinearGradient>
       </SafeAreaView>
 
+      {/* ── Photo Grid ── */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -114,17 +220,15 @@ const GalleryScreen = ({ route, navigation }: any) => {
         />
       )}
 
-      {/* Fullscreen Modal */}
+      {/* ── Fullscreen Modal ── */}
       <Modal visible={!!selected} transparent animationType="none" onRequestClose={closeModal}>
         <View style={styles.modalBg}>
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={closeModal} />
-
           <Animated.View style={[styles.modalContent, { opacity: modalOpacity, transform: [{ scale: modalScale }] }]}>
             {selected && (
               <>
                 <Image source={{ uri: selected.url }} style={styles.modalImage} resizeMode="contain" />
 
-                {/* Prev / Next */}
                 <TouchableOpacity style={[styles.navBtn, styles.navLeft]} onPress={prevImage}>
                   <Text style={styles.navText}>‹</Text>
                 </TouchableOpacity>
@@ -132,12 +236,10 @@ const GalleryScreen = ({ route, navigation }: any) => {
                   <Text style={styles.navText}>›</Text>
                 </TouchableOpacity>
 
-                {/* Close */}
                 <TouchableOpacity style={styles.closeBtn} onPress={closeModal}>
                   <Text style={styles.closeText}>✕</Text>
                 </TouchableOpacity>
 
-                {/* Breed info */}
                 {selected.breeds && selected.breeds.length > 0 && (
                   <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={styles.modalInfo}>
                     <Text style={styles.modalBreedName}>{selected.breeds[0].name}</Text>
@@ -147,7 +249,6 @@ const GalleryScreen = ({ route, navigation }: any) => {
                   </LinearGradient>
                 )}
 
-                {/* Counter */}
                 <View style={styles.counter}>
                   <Text style={styles.counterText}>{selectedIndex + 1} / {images.length}</Text>
                 </View>
@@ -162,21 +263,75 @@ const GalleryScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingBottom: 12 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 14, gap: 12 },
-  backBtn: {
+
+  // Header
+  header: { paddingBottom: 8 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    gap: 10,
+  },
+  iconBtn: {
     backgroundColor: COLORS.card,
     borderRadius: 20,
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  backText: { color: COLORS.text, fontSize: 18, fontWeight: '700' },
-  title: { color: COLORS.text, fontSize: 22, fontWeight: '900' },
-  subtitle: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+  iconBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  iconBtnText: { color: COLORS.text, fontSize: 17, fontWeight: '700' },
+  titleWrap: { flex: 1 },
+  title: { color: COLORS.text, fontSize: 20, fontWeight: '900' },
+  subtitle: { color: COLORS.textMuted, fontSize: 11, marginTop: 1 },
+
+  // Search
+  searchInputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    height: 40,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  searchInput: { flex: 1, color: COLORS.text, fontSize: 14 },
+  clearBtn: { paddingLeft: 6 },
+  clearText: { color: COLORS.textMuted, fontSize: 14 },
+
+  // Dropdown
+  dropdown: {
+    marginHorizontal: 14,
+    marginTop: 6,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 12,
+  },
+  dropdownThumb: { width: 40, height: 40, borderRadius: 10 },
+  dropdownInfo: { flex: 1 },
+  dropdownName: { color: COLORS.text, fontWeight: '700', fontSize: 14 },
+  dropdownGroup: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  dropdownArrow: { color: COLORS.primary, fontSize: 16, fontWeight: '700' },
+
+  // Grid
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { color: COLORS.textMuted, fontSize: 14 },
   grid: { padding: 2, paddingBottom: 30 },
