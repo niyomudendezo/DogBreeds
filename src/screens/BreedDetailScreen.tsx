@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Platform,
   SafeAreaView,
   StatusBar,
 } from 'react-native';
@@ -106,8 +107,11 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
     <View style={ss.root}>
       <StatusBar barStyle="light-content" />
       <ScrollView
+        style={[ss.scrollView, Platform.OS === 'web' && ss.webScrollView]}
         contentContainerStyle={ss.container}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+        removeClippedSubviews={false}
         scrollEventThrottle={16}
       >
         {/* Hero slideshow */}
@@ -206,8 +210,17 @@ const BreedDetailScreen = ({ route, navigation }: any) => {
 
 const ss = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },
-  // no flex on ScrollView — let content drive height
-  container: { paddingBottom: 60 },
+  // Keep the viewport bounded to the screen so overflowing content can scroll.
+  scrollView: { flex: 1 },
+  webScrollView: {
+    height: '100vh',
+    maxHeight: '100vh',
+    overflowY: 'auto',
+  } as any,
+  container: {
+    flexGrow: 1,
+    paddingBottom: 60,
+  },
 
   // Hero
   hero: { width, height: HERO_HEIGHT, overflow: 'hidden' },
@@ -280,7 +293,12 @@ const ss = StyleSheet.create({
   chipTxt: { color: COLORS.secondary, fontSize: 13, fontWeight: '600' },
 
   // Photo grid — 2 columns
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    width: '100%',
+  },
   photo: { width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 16 },
 });
 

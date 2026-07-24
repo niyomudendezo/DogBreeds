@@ -37,6 +37,12 @@ const tabStyles = StyleSheet.create({
   },
 });
 
+const SearchWithDrawer = ({ navigation, route }: any) => (
+  <SideDrawer navigation={navigation} activeScreen="Search">
+    <SearchScreen navigation={navigation} route={route} />
+  </SideDrawer>
+);
+
 // Wrapper that gives SideDrawer access to navigation
 const RootWithDrawer = ({ navigation }: any) => {
   const state = useNavigationState(s => s);
@@ -93,7 +99,7 @@ const AppNavigator = () => (
       <Stack.Screen name="MainTabs" component={RootWithDrawer} />
       <Stack.Screen name="BreedDetail" component={BreedDetailScreen} />
       <Stack.Screen name="ImageGallery" component={GalleryScreen} />
-      <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen name="Search" component={SearchWithDrawer} />
     </Stack.Navigator>
   </NavigationContainer>
 );

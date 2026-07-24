@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { fetchBreeds, fetchRandomImages } from '../api/dogApi';
+import { fetchBreeds } from '../api/dogApi';
 import { Breed, DogImage } from '../types';
 import { COLORS } from '../constants';
 import BreedCard from '../components/BreedCard';
@@ -26,14 +26,25 @@ const SLIDE_HEIGHT = height * 0.48;
 const GROUPS = ['All', 'Herding', 'Hound', 'Non-Sporting', 'Sporting', 'Terrier', 'Toy', 'Working'];
 
 // ── Auto-playing Hero Slideshow ──────────────────────────────────────────────
-const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
-  const [slides, setSlides] = useState<DogImage[]>([]);
+const HeroSlideshow = ({
+  slides,
+  onExplore,
+}: {
+  slides: DogImage[];
+  onExplore: () => void;
+}) => {
   const [current, setCurrent] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => { fetchRandomImages(8).then(setSlides); }, []);
+  // The first image renders immediately. Warm the browser/native image cache for
+  // the next slides without delaying the hero.
+  useEffect(() => {
+    slides.slice(1, 4).forEach(slide => {
+      Image.prefetch(slide.url).catch(() => undefined);
+    });
+  }, [slides]);
 
   const goTo = useCallback((next: number) => {
     Animated.parallel([
@@ -164,6 +175,18 @@ const HomeScreen = ({ navigation }: any) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const listRef = useRef<any>(null);
+  const heroSlides = useMemo<DogImage[]>(
+    () => breeds
+      .filter(breed => Boolean(breed.image?.url || breed.reference_image_id))
+      .slice(0, 8)
+      .map(breed => ({
+      id: breed.reference_image_id || String(breed.id),
+      url: breed.image?.url ||
+        `https://cdn2.thedogapi.com/images/${breed.reference_image_id}.jpg`,
+      breeds: [breed],
+      })),
+    [breeds],
+  );
 
   useEffect(() => { loadBreeds(); }, []);
 
@@ -197,7 +220,7 @@ const HomeScreen = ({ navigation }: any) => {
 
   const ListHeader = (
     <View>
-      <HeroSlideshow onExplore={scrollToGrid} />
+      <HeroSlideshow slides={heroSlides} onExplore={scrollToGrid} />
       <FeaturedRow breeds={breeds} navigation={navigation} />
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🐕 All Breeds</Text>
