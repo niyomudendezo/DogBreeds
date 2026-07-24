@@ -27,7 +27,7 @@ const MENU = [
   { label: 'Home',      emoji: '🏠', screen: 'Home' },
   { label: 'Gallery',   emoji: '📸', screen: 'Gallery' },
   { label: 'Favorites', emoji: '❤️', screen: 'Favorites' },
-  { label: 'Search',    emoji: '🔍', screen: 'Gallery' },
+  { label: 'Search',    emoji: '🔍', screen: 'Search' },
 ];
 
 interface Props {
@@ -67,6 +67,7 @@ const SideDrawer: React.FC<Props> = ({ children, navigation, activeScreen }) => 
       if (screen === 'Home') navigation.navigate('MainTabs', { screen: 'Home' });
       else if (screen === 'Gallery') navigation.navigate('MainTabs', { screen: 'Gallery' });
       else if (screen === 'Favorites') navigation.navigate('MainTabs', { screen: 'Favorites' });
+      else if (screen === 'Search') navigation.navigate('Search');
     }, 260);
   };
 

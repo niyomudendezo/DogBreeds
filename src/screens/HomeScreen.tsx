@@ -82,10 +82,6 @@ const HeroSlideshow = ({ onExplore }: { onExplore: () => void }) => {
         <View style={styles.logoRow}>
           <Text style={styles.logoText}>🐾 DogBreeds</Text>
           <View style={styles.logoRight}>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
             <HamburgerBtn />
           </View>
         </View>
@@ -259,9 +255,6 @@ const styles = StyleSheet.create({
   logoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 14 },
   logoText: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.5 },
   logoRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,107,53,0.25)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.primary, gap: 5 },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
-  liveText: { color: COLORS.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
   slideBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, paddingBottom: 28 },
   slideBreedBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(255,107,53,0.3)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(255,107,53,0.6)', marginBottom: 10 },
   slideBreedText: { color: COLORS.secondary, fontSize: 12, fontWeight: '700' },

@@ -9,6 +9,7 @@ import BreedDetailScreen from '../screens/BreedDetailScreen';
 import GalleryScreen from '../screens/GalleryScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import SideDrawer from '../components/SideDrawer';
+import SearchScreen from '../screens/SearchScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -90,6 +91,7 @@ const AppNavigator = () => (
       <Stack.Screen name="MainTabs" component={RootWithDrawer} />
       <Stack.Screen name="BreedDetail" component={BreedDetailScreen} />
       <Stack.Screen name="ImageGallery" component={GalleryScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );
